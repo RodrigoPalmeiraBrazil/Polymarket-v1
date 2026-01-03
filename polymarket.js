@@ -1,21 +1,29 @@
 const { ClobClient } = require('@polymarket/clob-client');
+const { ethers } = require('ethers');
 
 class Polymarket {
     constructor() {
-        this.host = "https://clob.polymarket.com";
+        this.host = process.env.CLOB_API_URL || "https://clob.polymarket.com";
         this.key = process.env.POLYMARKET_PRIVATE_KEY;
-        this.chainId = 137;
-        this.proxyAddress = process.env.POLYMARKET_PROXY_ADDRESS;
-        this.apiKey = process.env.POLYMARKET_API_KEY;
+        this.chainId = parseInt(process.env.CHAIN_ID) || 137;
+        
+        // Credenciais da API (ApiKeyCreds)
+        this.creds = {
+            key: process.env.POLYMARKET_API_KEY,
+            secret: process.env.POLYMARKET_API_SECRET, // Certifique-se que este nome bate com o seu Secret
+            passphrase: process.env.POLYMARKET_PASS_PHRASE,
+        };
 
-        // Inicializa o cliente para Email/Magic account (signature_type: 1)
-        // Se for Wallet (Metamask etc), use signature_type: 2
+        // Wallet para assinatura
+        this.wallet = new ethers.Wallet(this.key);
+
+        // Inicializa o cliente seguindo o padrão do exemplo
+        // O ClobClient no JS aceita (host, chainId, wallet, creds)
         this.client = new ClobClient(
             this.host, 
             this.chainId, 
-            this.key, 
-            1, 
-            this.proxyAddress
+            this.wallet, 
+            this.creds
         );
     }
 
@@ -25,10 +33,6 @@ class Polymarket {
      */
     async PlaceBatchOrders(orders) {
         try {
-            // Garante que as credenciais da API estejam configuradas
-            // createOrDeriveApiCreds pode ser necessário se for a primeira vez
-            // Mas geralmente usamos as que já temos no secret
-            
             console.log("Enviando lote de ordens para Polymarket...");
             const resp = await this.client.postOrders(orders);
             return resp;
@@ -51,6 +55,13 @@ class Polymarket {
             console.error("Erro ao cancelar ordens em lote:", error);
             throw error;
         }
+    }
+
+    /**
+     * Helper para criar uma ordem assinada (como no exemplo)
+     */
+    async CreateOrder(params) {
+        return await this.client.createOrder(params);
     }
 }
 
