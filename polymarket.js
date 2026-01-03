@@ -1,4 +1,4 @@
-const { ClobClient } = require('@polymarket/clob-client');
+const { ClobClient, Side, OrderType } = require('@polymarket/clob-client');
 const { ethers } = require('ethers');
 
 class Polymarket {
@@ -27,16 +27,37 @@ class Polymarket {
     }
 
     /**
-     * Envia múltiplas ordens em lote (Batch)
-     * @param {Array} orders - Lista de objetos PostOrdersArgs
+     * Envia múltiplas ordens em lote (Batch) com sanitização automática
+     * @param {Array} rawOrders - Lista de ordens enviadas pelo usuário
      */
-    async PlaceBatchOrders(orders) {
+    async PlaceBatchOrders(rawOrders) {
         try {
-            console.log("Enviando lote de ordens para Polymarket...");
-            const resp = await this.client.postOrders(orders);
+            console.log("Sanitizando e assinando ordens para Polymarket...");
+            
+            const processedOrders = await Promise.all(rawOrders.map(async (item) => {
+                // Converte a string "BUY"/"SELL" para o ENUM correspondente
+                const side = item.side === 'BUY' ? Side.BUY : Side.SELL;
+
+                // Cria a ordem assinada
+                const signedOrder = await this.client.createOrder({
+                    tokenID: item.tokenID,
+                    price: item.price,
+                    side: side,
+                    size: item.size
+                });
+
+                // Retorna no formato PostOrdersArgs esperado pela API
+                return {
+                    order: signedOrder,
+                    orderType: OrderType.GTC
+                };
+            }));
+
+            console.log(`Enviando lote de ${processedOrders.length} ordens...`);
+            const resp = await this.client.postOrders(processedOrders);
             return resp;
         } catch (error) {
-            console.error("Erro ao enviar ordens em lote:", error);
+            console.error("Erro ao processar/enviar ordens em lote:", error);
             throw error;
         }
     }
@@ -57,13 +78,12 @@ class Polymarket {
     }
 
     /**
-     * Cancela múltiplas ordens em lote (conforme o último exemplo enviado)
+     * Cancela múltiplas ordens em lote
      * @param {Array} orderIds - Lista de strings com os IDs das ordens
      */
     async CancelBatchOrders(orderIds) {
         try {
             console.log("Cancelando lote de ordens na Polymarket...");
-            // O método cancelOrders no cliente oficial recebe a lista diretamente
             const resp = await this.client.cancelOrders(orderIds);
             return resp;
         } catch (error) {
@@ -73,7 +93,7 @@ class Polymarket {
     }
 
     /**
-     * Helper para criar uma ordem assinada
+     * Helper para criar uma ordem assinada (caso precise usar fora do batch)
      */
     async CreateOrder(params) {
         return await this.client.createOrder(params);
