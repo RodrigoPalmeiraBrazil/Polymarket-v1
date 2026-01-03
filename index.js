@@ -1,13 +1,17 @@
 const express = require('express');
 const app = express();
+const routes = require('./routes');
 const port = 5000;
 
+// Middleware para processar JSON no corpo das requisições
+app.use(express.json());
+
+// Concentra todas as rotas no arquivo separado
+app.use('/api', routes);
+
+// Rota raiz para redirecionamento ou status simples
 app.get('/', (req, res) => {
-  res.json({
-    id: process.env.USER_ID_KEY, // Esta é a linha que adicionei para segurança
-    name: "Rodrigo Palmeira",
-    age: 32
-  });
+  res.send('API Online. Use /api/user para GET ou /api/orders para POST.');
 });
 
 app.listen(port, '0.0.0.0', () => {
