@@ -10,7 +10,7 @@ class Polymarket {
         // Credenciais da API (ApiKeyCreds)
         this.creds = {
             key: process.env.POLYMARKET_API_KEY,
-            secret: process.env.POLYMARKET_API_SECRET, // Certifique-se que este nome bate com o seu Secret
+            secret: process.env.POLYMARKET_API_SECRET,
             passphrase: process.env.POLYMARKET_PASS_PHRASE,
         };
 
@@ -18,7 +18,6 @@ class Polymarket {
         this.wallet = new ethers.Wallet(this.key);
 
         // Inicializa o cliente seguindo o padrão do exemplo
-        // O ClobClient no JS aceita (host, chainId, wallet, creds)
         this.client = new ClobClient(
             this.host, 
             this.chainId, 
@@ -43,6 +42,21 @@ class Polymarket {
     }
 
     /**
+     * Cancela uma única ordem (conforme o exemplo enviado)
+     * @param {string} orderId - O ID da ordem a ser cancelada
+     */
+    async CancelOrder(orderId) {
+        try {
+            console.log(`Cancelando ordem ${orderId} na Polymarket...`);
+            const resp = await this.client.cancelOrder({ orderID: orderId });
+            return resp;
+        } catch (error) {
+            console.error("Erro ao cancelar ordem:", error);
+            throw error;
+        }
+    }
+
+    /**
      * Cancela múltiplas ordens em lote
      * @param {Array} orderIds - Lista de strings com os IDs das ordens
      */
@@ -58,7 +72,7 @@ class Polymarket {
     }
 
     /**
-     * Helper para criar uma ordem assinada (como no exemplo)
+     * Helper para criar uma ordem assinada
      */
     async CreateOrder(params) {
         return await this.client.createOrder(params);
