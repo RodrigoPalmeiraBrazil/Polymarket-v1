@@ -1,12 +1,12 @@
-const { ClobClient, Side, OrderType } = require('@polymarket/clob-client');
-const { ethers } = require('ethers');
+const { ClobClient, Side, OrderType } = require("@polymarket/clob-client");
+const { ethers } = require("ethers");
 
 class Polymarket {
     constructor() {
         this.host = process.env.CLOB_API_URL || "https://clob.polymarket.com";
         this.key = process.env.POLYMARKET_PRIVATE_KEY;
         this.chainId = parseInt(process.env.CHAIN_ID) || 137;
-        
+
         // Credenciais da API (ApiKeyCreds)
         this.creds = {
             key: process.env.POLYMARKET_API_KEY,
@@ -19,10 +19,10 @@ class Polymarket {
 
         // Inicializa o cliente seguindo o padrão do exemplo
         this.client = new ClobClient(
-            this.host, 
-            this.chainId, 
-            this.wallet, 
-            this.creds
+            this.host,
+            this.chainId,
+            this.wallet,
+            this.creds,
         );
     }
 
@@ -33,25 +33,27 @@ class Polymarket {
     async PlaceBatchOrders(rawOrders) {
         try {
             console.log("Sanitizando e assinando ordens para Polymarket...");
-            
-            const processedOrders = await Promise.all(rawOrders.map(async (item) => {
-                // Converte a string "BUY"/"SELL" para o ENUM correspondente
-                const side = item.side === 'BUY' ? Side.BUY : Side.SELL;
 
-                // Cria a ordem assinada
-                const signedOrder = await this.client.createOrder({
-                    tokenID: item.tokenID,
-                    price: item.price,
-                    side: side,
-                    size: item.size
-                });
+            const processedOrders = await Promise.all(
+                rawOrders.map(async (item) => {
+                    // Converte a string "BUY"/"SELL" para o ENUM correspondente
+                    const side = item.side === "BUY" ? Side.BUY : Side.SELL;
 
-                // Retorna no formato PostOrdersArgs esperado pela API
-                return {
-                    order: signedOrder,
-                    orderType: OrderType.GTC
-                };
-            }));
+                    // Cria a ordem assinada
+                    const signedOrder = await this.client.createOrder({
+                        tokenID: item.tokenID,
+                        price: item.price,
+                        side: side,
+                        size: item.size,
+                    });
+
+                    // Retorna no formato PostOrdersArgs esperado pela API
+                    return {
+                        order: signedOrder,
+                        orderType: OrderType.GTC,
+                    };
+                }),
+            );
 
             console.log(`Enviando lote de ${processedOrders.length} ordens...`);
             const resp = await this.client.postOrders(processedOrders);
