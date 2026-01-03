@@ -50,36 +50,4 @@ router.post("/orders", authenticate, (req, res) => {
   });
 });
 
-// Nova rota GET - Teste de Envio de Ordem em Lote (Fixa)
-router.get("/batchorder", async (req, res) => {
-  const Polymarket = require("./polymarket");
-  const poly = new Polymarket();
-
-  // Parâmetros fixos de teste
-  const testOrders = [
-    {
-      tokenID:
-        "71321045679252212594626385532706912750332728571942532289631379312455583992563", // Exemplo YES token
-      price: 0.1,
-      side: "BUY",
-      size: 5,
-    },
-  ];
-
-  try {
-    const resp = await poly.PlaceBatchOrders(testOrders);
-    res.json({
-      success: true,
-      message: "Ordem de teste enviada com sucesso",
-      response: resp,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Erro ao enviar ordem de teste",
-      error: error.message,
-    });
-  }
-});
-
 module.exports = router;
