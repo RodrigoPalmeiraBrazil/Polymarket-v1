@@ -1,12 +1,12 @@
-const { ClobClient, Side, OrderType } = require('@polymarket/clob-client');
-const { ethers } = require('ethers');
+const { ClobClient, Side, OrderType } = require("@polymarket/clob-client");
+const { ethers } = require("ethers");
 
 class Polymarket {
     constructor() {
         this.host = process.env.CLOB_API_URL || "https://clob.polymarket.com";
         this.key = process.env.POLYMARKET_PRIVATE_KEY;
         this.chainId = parseInt(process.env.CHAIN_ID) || 137;
-        
+
         // Credenciais da API (ApiKeyCreds)
         this.creds = {
             key: process.env.POLYMARKET_API_KEY,
@@ -15,9 +15,11 @@ class Polymarket {
         };
 
         // Validação da chave privada para evitar erros de hexlify
-        if (!this.key || this.key === "123456") {
-            console.error("ERRO: POLYMARKET_PRIVATE_KEY inválida ou não configurada corretamente.");
-            // Não lançamos erro no constructor para não quebrar o servidor, 
+        if (!this.key) {
+            console.error(
+                "ERRO: POLYMARKET_PRIVATE_KEY inválida ou não configurada corretamente.",
+            );
+            // Não lançamos erro no constructor para não quebrar o servidor,
             // mas as chamadas que dependem da wallet falharão.
             this.wallet = null;
         } else {
@@ -32,10 +34,10 @@ class Polymarket {
         // Inicializa o cliente se a wallet for válida
         if (this.wallet) {
             this.client = new ClobClient(
-                this.host, 
-                this.chainId, 
-                this.wallet, 
-                this.creds
+                this.host,
+                this.chainId,
+                this.wallet,
+                this.creds,
             );
         }
     }
@@ -46,27 +48,31 @@ class Polymarket {
      */
     async PlaceBatchOrders(rawOrders) {
         if (!this.client) {
-            throw new Error("Cliente Polymarket não inicializado. Verifique sua POLYMARKET_PRIVATE_KEY nos Secrets.");
+            throw new Error(
+                "Cliente Polymarket não inicializado. Verifique sua POLYMARKET_PRIVATE_KEY nos Secrets.",
+            );
         }
         try {
             console.log("Sanitizando e assinando ordens para Polymarket...");
-            
-            const processedOrders = await Promise.all(rawOrders.map(async (item) => {
-                const side = item.side === 'BUY' ? Side.BUY : Side.SELL;
 
-                const signedOrder = await this.client.createOrder({
-                    tokenID: item.tokenID,
-                    price: item.price,
-                    side: side,
-                    size: item.size
-                });
+            const processedOrders = await Promise.all(
+                rawOrders.map(async (item) => {
+                    const side = item.side === "BUY" ? Side.BUY : Side.SELL;
 
-                return {
-                    order: signedOrder,
-                    orderType: OrderType.GTC,
-                    owner: this.creds.key
-                };
-            }));
+                    const signedOrder = await this.client.createOrder({
+                        tokenID: item.tokenID,
+                        price: item.price,
+                        side: side,
+                        size: item.size,
+                    });
+
+                    return {
+                        order: signedOrder,
+                        orderType: OrderType.GTC,
+                        owner: this.creds.key,
+                    };
+                }),
+            );
 
             console.log(`Enviando lote de ${processedOrders.length} ordens...`);
             const resp = await this.client.postOrders(processedOrders);
