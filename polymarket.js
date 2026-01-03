@@ -42,7 +42,7 @@ class Polymarket {
     }
 
     /**
-     * Cancela uma única ordem (conforme o exemplo enviado)
+     * Cancela uma única ordem
      * @param {string} orderId - O ID da ordem a ser cancelada
      */
     async CancelOrder(orderId) {
@@ -57,12 +57,13 @@ class Polymarket {
     }
 
     /**
-     * Cancela múltiplas ordens em lote
+     * Cancela múltiplas ordens em lote (conforme o último exemplo enviado)
      * @param {Array} orderIds - Lista de strings com os IDs das ordens
      */
     async CancelBatchOrders(orderIds) {
         try {
             console.log("Cancelando lote de ordens na Polymarket...");
+            // O método cancelOrders no cliente oficial recebe a lista diretamente
             const resp = await this.client.cancelOrders(orderIds);
             return resp;
         } catch (error) {
