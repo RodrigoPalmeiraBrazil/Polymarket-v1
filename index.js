@@ -4,7 +4,7 @@ const port = 5000;
 
 app.get('/', (req, res) => {
   res.json({
-    id: process.env.USER_ID_KEY,
+    id: process.env.USER_ID_KEY, // Esta é a linha que adicionei para segurança
     name: "Rodrigo Palmeira",
     age: 32
   });
